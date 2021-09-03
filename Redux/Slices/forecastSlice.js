@@ -2,37 +2,42 @@ import { createSlice } from "@reduxjs/toolkit";
 import { getApiReturnedValue } from "../../API/openWeather";
 
 const initialState = {
-  forecastArray: [],
-  forecastObject: null,
+  historyLog: [],
+  rawData: [],
 };
 
 const forecastSlice = createSlice({
   name: "forecast",
   initialState,
   reducers: {
-    getForecast(state, action) {
-      state.forecastArray = action.payload;
+    getHistory(state, action) {
+      state.historyLog.unshift(action.payload);
+    },
+    getRawData(state, action) {
+      state.rawData = action.payload;
     },
   },
 });
 
-//five day forecast fetching
+const process_forecast_data = (list) => {
+  let fc_data_by_date = {};
+  list.map((item) => {
+    let date_arr = item.dt_txt.split(" ");
+    let date = date_arr[0];
+    if (!fc_data_by_date[date]) {
+      fc_data_by_date[date] = [];
+    }
+    fc_data_by_date[date].push(item);
+  });
+  return fc_data_by_date;
+};
 
 export const fetchWeather = (searchText) => async (dispatch) => {
   let weatherFromApi = getApiReturnedValue(searchText);
   const res = await fetch(weatherFromApi);
   const data = await res.json();
-  //console.log(data);
-  let tempForecast = [];
-  data.list.forEach((weatherObject, index) => {
-    if (index % 8 === 0) {
-      tempForecast.push(weatherObject);
-    }
-  });
-  // console.log("temppppppppppp")
-  //console.log(tempForecast)
-  dispatch(getForecast(tempForecast));
+  dispatch(getRawData(process_forecast_data(data.list)));
 };
 
-export const { getForecast } = forecastSlice.actions;
+export const { getForecast, getHistory, getRawData } = forecastSlice.actions;
 export default forecastSlice.reducer;

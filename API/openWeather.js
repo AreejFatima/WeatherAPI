@@ -1,13 +1,13 @@
-let apiKey = "c73aa228bfba692462f96e89080aa39a";
+let apiKey = "60bdbccc439a6a9cdc5612e9139e7458";
 
 export const getApiReturnedValue = (searchText) => {
-  let callWithZip =
+  const callWithZip =
     `http://api.openweathermap.org/data/2.5/forecast?zip=` +
     searchText +
     "&units=metric&appid=" +
     apiKey;
 
-  let callWithCity =
+  const callWithCity =
     `http://api.openweathermap.org/data/2.5/forecast?q=` +
     searchText +
     "&units=metric&appid=" +
