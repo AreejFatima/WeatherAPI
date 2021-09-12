@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import CurrentDayForecast from "./CurrentDayForecast";
 import Moment from "react-moment";
 
+const R = require("ramda");
+
 const FiveDayForecast = () => {
   const forecastlist = useSelector((state) => state.forecast.rawData);
   const [fc_flag, setfcFlag] = useState(false);
@@ -15,15 +17,15 @@ const FiveDayForecast = () => {
   const dataForChart = (list) => {
     const fc_data_by_date = {};
     const fc_dates = [];
-    Object.keys(list).map(function (key, index) {
+    R.map(function (key, index) {
       const labels = [];
       const data = [];
-      list[key].map((item) => {
-        const time_arr = item["dt_txt"].split(" ");
-        const time = time_arr[1];
+      R.map((item) => {
+        const time_arr = R.split(" ", R.path(["dt_txt"], item));
+        const time = R.path([1], time_arr);
         labels.push(time);
-        data.push(item.main.temp);
-      });
+        data.push(R.path(["main", "temp"], item));
+      }, list[key]);
       const obj = {
         labels,
         datasets: [
@@ -36,7 +38,7 @@ const FiveDayForecast = () => {
         ],
       };
       fc_data_by_date[key] = obj;
-    });
+    }, R.keys(list));
 
     return fc_data_by_date;
   };
@@ -53,19 +55,25 @@ const FiveDayForecast = () => {
   return (
     <div>
       <div className="displayFiveDayForecast">
-        {Object.values(forecastlist).map((singledayForecast, index) => {
-          const iconId = singledayForecast[0]["weather"][0]["icon"];
-
+        {R.values(forecastlist).map((singledayForecast, index) => {
+          const iconId = R.pathOr(
+            "N/A",
+            [0, "weather", 0, "icon"],
+            singledayForecast
+          );
           const url = `http://openweathermap.org/img/w/${iconId}.png`;
-          if (index === 0) {
+          if (R.equals(index, 0)) {
             return null;
           }
+
           return (
             <div
               className="weather-box card"
-              onClick={() => dayClicked(index, singledayForecast[0]["dt"])}
+              onClick={() =>
+                dayClicked(index, R.path([0, "dt"], singledayForecast))
+              }
               style={
-                singledayForecast[0]["dt"] === active
+                R.equals(R.path([0, "dt"], singledayForecast), active)
                   ? {
                       borderColor: "yellow",
                       backgroundColor: "rgba(6, 6, 43, 0.63)",
@@ -76,7 +84,7 @@ const FiveDayForecast = () => {
             >
               <div className="dayOfTheWeek">
                 <Moment unix format="ddd">
-                  {singledayForecast[0]["dt"]}
+                  {R.path([0, "dt"], singledayForecast)}
                 </Moment>
               </div>
 
@@ -84,15 +92,21 @@ const FiveDayForecast = () => {
                 <img src={url}></img>
               </div>
               <span className="weatherDetails ">
-                <b>{Math.round(singledayForecast[0]["main"]["temp_min"])}°</b>
-                {Math.round(singledayForecast[0]["main"]["temp_max"])}°
+                <b>
+                  {Math.round(
+                    R.path([0, "main", "temp_min"], singledayForecast)
+                  )}
+                  °
+                </b>
+                {Math.round(R.path([0, "main", "temp_max"], singledayForecast))}
+                °
               </span>
             </div>
           );
         })}
       </div>
-      <CurrentDayForecast current={Object.values(forecastlist)[ind]} />
-      <WeatherChart current_data={Object.values(processedData)[ind]} />
+      <CurrentDayForecast current={R.values(forecastlist)[ind]} />
+      <WeatherChart current_data={R.values(processedData)[ind]} />
     </div>
   );
 };

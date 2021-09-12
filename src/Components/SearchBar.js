@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import forecastSlice from "../Redux/Slices/forecastSlice";
 import { getHistory } from "../Redux/Slices/forecastSlice";
 
+const R = require("ramda");
+
 const SearchBar = () => {
   const [searchText, setSearchText] = useState("");
   const historylist = useSelector((state) => state.forecast.historyLog);
   const distinct = [...new Set(historylist)];
-  const top3 = distinct.slice(0, 4);
+  const top3 = R.slice(0, 4, distinct);
 
   const dispatch = useDispatch();
 
@@ -25,7 +27,7 @@ const SearchBar = () => {
   const onSubmitSearchText = (event) => {
     event.preventDefault();
 
-    if (searchText === "") {
+    if (R.equals(searchText,"")) {
       alert("please enter valid city name /zip code");
     } else {
       dispatch(getHistory(searchText));
@@ -55,7 +57,7 @@ const SearchBar = () => {
         />
       </form>
       <div className="history-box">
-        {top3.map((item, index) => {
+        {R.map((item, index) => {
           return (
             <button
               className="history"
@@ -66,7 +68,7 @@ const SearchBar = () => {
               {item}
             </button>
           );
-        })}
+        }, top3)}
       </div>
     </div>
   );
